@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 from langchain_core.prompts import PromptTemplate
 from langchain_groq import ChatGroq
+from langchain_ollama import ChatOllama
 
 load_dotenv()
 
@@ -23,6 +24,7 @@ Musk verfügt über ein Vermögen von etwa 400 Milliarden US-Dollar und ist dami
     )
 
     llm = ChatGroq(temperature=0, model="llama3-8b-8192")
+    # llm = ChatOllama(model="gpt-oss", temperature=0)
     chain = summary_prompt_template | llm
     response = chain.invoke({"information": information})
     print(response.content)
