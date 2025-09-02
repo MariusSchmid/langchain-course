@@ -1,0 +1,15 @@
+[project]
+name = "langchain-course"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "black>=25.1.0",
+    "dotenv>=0.9.9",
+    "langchain>=0.3.27",
+    "langchain-community>=0.3.29",
+    "langchain-groq>=0.3.7",
+    "langchain-pinecone>=0.2.12",
+    "langchainhub>=0.1.21",
+]
