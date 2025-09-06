@@ -1,9 +1,11 @@
+from typing import Any
 from dotenv import load_dotenv
 from langchain import hub
 from langchain_groq import ChatGroq
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain_experimental.tools import PythonREPLTool
 from langchain_experimental.agents.agent_toolkits import create_csv_agent
+from langchain.tools import Tool
 
 
 load_dotenv()
@@ -22,33 +24,57 @@ def main():
     base_prompt = hub.pull("langchain-ai/react-agent-template")
     prompt = base_prompt.partial(instructions=instructions)
 
-    # tools = [PythonREPLTool()]
-    # agent = create_react_agent(
-    #     ChatGroq(temperature=0, model="llama-3.3-70b-versatile"),
-    #     tools,
-    #     prompt=prompt,
-    #     # verbose=True,
-    # )
-    # agent_executor = AgentExecutor.from_agent_and_tools(
-    #     agent=agent, tools=tools, verbose=True
-    # )
-    # agent_executor.invoke(
-    #     input={
-    #         "input": """generate and save in current working directory 15 QRcodes
-    #                             that point to www.udemy.com/course/langchain, you have qrcode package installed already"""
-    #     }
-    # )
-
-    csv_agent = create_csv_agent(
+    tools = [PythonREPLTool()]
+    agent = create_react_agent(
         ChatGroq(temperature=0, model="llama-3.3-70b-versatile"),
-        "episode_info.csv",
+        tools,
+        prompt=prompt,
+        # verbose=True,
+    )
+    python_agent_executor = AgentExecutor.from_agent_and_tools(
+        agent=agent, tools=tools, verbose=True
+    )
+    csv_agent_executor: AgentExecutor = create_csv_agent(
+        llm=ChatGroq(temperature=0, model="llama-3.3-70b-versatile"),
+        path="episode_info.csv",
         verbose=True,
         allow_dangerous_code=True,
     )
-    csv_agent.invoke(
-        input={"input": "which wrote the most episodes? how many episodes?"}
+
+    #### Router Grand Agent ####
+    def python_agent_executor_wrapper(original_input: str) -> dict[str, Any]:
+        return python_agent_executor.invoke({"input": original_input})
+
+    tools = [
+        Tool(
+            name="Python Agent",
+            func=python_agent_executor_wrapper,
+            description="""useful when you need to transform natural language to python and execute the python code,
+                          returning the results of the code execution
+                          DOES NOT ACCEPT CODE AS INPUT""",
+        ),
+        Tool(
+            name="CSV Agent",
+            func=csv_agent_executor.invoke,
+            description="""useful when you need to answer question over episode_info.csv file,
+                         takes an input the entire question and returns the answer after running pandas calculations""",
+        ),
+    ]
+
+    prompt = base_prompt.partial(instructions="")
+    grand_agent = create_react_agent(
+        ChatGroq(temperature=0, model="llama-3.3-70b-versatile"),
+        tools,
+        prompt=prompt,
+        # verbose=True,
     )
-    # csv_agent.invoke(input={"input": "How many episodes are there?"})
+    grand_agent_executor = AgentExecutor(agent=grand_agent, tools=tools, verbose=True)
+
+    grand_agent_executor.invoke(
+        {
+            "input": "Generate and save in current working directory 15 qrcodes that point to `www.udemy.com/course/langchain`",
+        }
+    )
 
 
 if __name__ == "__main__":
