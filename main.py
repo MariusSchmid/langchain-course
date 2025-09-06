@@ -4,6 +4,11 @@ import streamlit as st
 
 st.header("LangChain Course - LLM with Vector DB")
 
+with st.sidebar:
+    st.image("https://randomuser.me/api/portraits/men/75.jpg", width=100)
+    st.markdown("**Name:** John Doe")
+    st.markdown("**Email:** john.doe@example.com")
+
 prompt = st.text_input("Prompt", placeholder="What is LangChain?")
 
 if "user_prompt_history" not in st.session_state:

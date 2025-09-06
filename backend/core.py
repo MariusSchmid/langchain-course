@@ -24,6 +24,7 @@ def run_llm(query: str, chat_history: List[Dict[str, Any]]) -> str:
     stuff_document_chain = create_stuff_documents_chain(chat, retrieval_qa_chat_prompt)
 
     rephrase_prompt = hub.pull("langchain-ai/chat-langchain-rephrase")
+
     history_aware_retriever = create_history_aware_retriever(
         llm=chat, prompt=rephrase_prompt, retriever=docsearch.as_retriever()
     )
